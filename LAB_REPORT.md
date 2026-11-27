@@ -2,29 +2,43 @@
 
 At each milestone, copy the observed results under **Checkpoint**, then answer the matching **Question** from the Lab Guide.
 
+Teacher note: If you use Render in this workshop, you do not need to do part 4.3 Local staging. Using Render is recommended.
+
 ## Milestone 1 · Inspect the model handoff
 
 ### Checkpoint 1 · Evidence
 
-- GitHub repository URL:
-- Expected model version:
-- Three class labels:
-- First pushed commit SHA:
+- GitHub repository URL: https://github.com/GitGudShu/AI53_MLOPS_P2
+- Expected model version: `phase1-reference-v1`
+- Three class labels: `angular_leaf_spot`, `bean_rust`, `healthy`
+- First pushed commit SHA: `4068c873a3c3be802a124d0f98ec52fee1300d3b`
 
 ### Question 1 · Explanation
 
-Answer:
+Answer: The model version identifies the trained weights inside `bean-cnn.onnx` from Phase 1, shaped by the training data, settings, and selected run. The API reads it from the ONNX metadata and returns it with responses so we can check which model answered.
+
+The Git SHA identifies one exact snapshot of the repo, covering the API code, Dockerfile, tests, dependency lock file, and committed model file. By itself and in theory, it shouldn't say anything about how the model was trained.
 
 ## Milestone 2 · Serve predictions with FastAPI
 
 ### Checkpoint 2 · Evidence
 
-- Final API test count after TODO 1:
+- Final API test count after TODO 1: 7 passed (after running `uv run --locked pytest -q tests/test_api.py`)
 - Browser prediction JSON for `data/current/leaf-01.jpg` (`UNAVAILABLE` and the error shown if the page gives no prediction):
+
+```json
+{
+  "label": "angular_leaf_spot",
+  "confidence": 0.5016346573829651,
+  "model_version": "phase1-reference-v1"
+}
+```
 
 ### Question 2 · Explanation
 
-Answer:
+Answer:`/health` only checks that the service process is running and answering HTTP requests. It skips the model and returns `{"status": "ok"}` with a 200 status regardless of the model's state. `/ready` checks that the ONNX model loaded at startup with valid version and label metadata.
+
+Including the model version in every prediction response lets you trace each result back to the exact model that made it. This is important for debugging, auditing, and comparing results across different model versions.
 
 ## Milestone 3 · Run tests and build in GitHub Actions
 
