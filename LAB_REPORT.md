@@ -101,11 +101,17 @@ Fill each row from its own `summary.json`. Use the file from the CURRENT report 
 
 | Batch | Reference mean (`reference_mean`) | Batch mean (`current_mean`) | Method | Score | Threshold | Result (`DRIFT` or `NO DRIFT`) |
 | --- | --- | --- | --- | --- | --- | --- |
-| `CURRENT` | | | | | | |
-| `SHIFTED` | | | | | | |
+| `CURRENT` | 0.4724440528104574 | 0.47574189751633994 | K-S p_value | 0.8079631540901643 | 0.05 | `NO DRIFT` |
+| `SHIFTED` | 0.4724440528104574 | 0.16466240836601304 | K-S p_value | 1.6911233892144742e-17 | 0.05 | `DRIFT` |
 
-- Final full test count:
+- Final full test count: 9 passed (after running `uv run --locked --group monitoring pytest -q`)
 
 ### Question 5 · Explanation
 
-Answer:
+Answer: For CURRENT, we should go with MONITOR because Evidently shows a p-value of 0.81 so no drift, and nearly identical average brightness (0.476 vs 0.472), meaning we just keep logging incoming images and re-run the check on our normal schedule.
+
+For SHIFTED, we should go with REPAIR first, or RETRAIN if the change is permanent. Evidently flags drift with a p-value around 1.7e-17, average brightness drops from 0.472 to 0.165, and accuracy falls from 57% (17/30) to 33% (10/30) because the model predicts `bean_rust` for every photo with inflated confidence (0.87).
+
+If accuracy stays low after a repair and we have another model version, we should test both models side by side on the recent labeled images. If the other version already achieves better accuracy and balanced results across classes, we switch to it since deploying an existing model is faster, whereas we retrain if both models struggle because neither has learned the new conditions.
+
+Before promoting anything from staging, we will confirm `/ready` returns 200 with the expected `model_version`, run the recent labeled images through `/predict` to verify accuracy and confidence levels, check latency and error rates, and re-run Evidently to make sure the inputs look normal.
